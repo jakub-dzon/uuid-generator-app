@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uuid-generator
+  labels:
+    app: uuid-generator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: uuid-generator
+  template:
+    metadata:
+      labels:
+        app: uuid-generator
+    spec:
+      containers:
+        - name: uuid-generator
+          image: quay.io/jdzon/uuid-generator-app:0.0.1-ok
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          startupProbe:
+            httpGet:
+              path: /status
+              port: liveness-port
+            failureThreshold: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uuid-generator
+spec:
+  selector:
+    app: uuid-generator
+  type: NodePort
+  ports:
+    - name: uuid-generator
+      port: 80
+      targetPort: 8080
